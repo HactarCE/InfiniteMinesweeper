@@ -7,7 +7,10 @@
 #![deny(clippy::correctness)]
 
 mod grid;
+mod gui;
+
+const TITLE: &str = "HMines Infinite";
 
 fn main() {
-    println!("Hello, world!");
+    gui::show_gui();
 }

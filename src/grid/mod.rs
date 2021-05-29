@@ -10,6 +10,11 @@ const CHUNK_SIZE: usize = 2_usize.pow(CHUNK_SIZE_LOG_2 as u32);
 #[derive(Debug, Default, Clone)]
 pub struct Grid(HashMap<ChunkPos, Chunk>);
 impl Grid {
+    /// Returns a new empty grid.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Returns a chunk of the grid, or `None` if the chunk is missing.
     pub fn get_chunk(&self, pos: ChunkPos) -> Option<&Chunk> {
         self.0.get(&pos)
