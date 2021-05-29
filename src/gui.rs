@@ -93,14 +93,9 @@ pub fn show_gui() -> ! {
 
             let mut target = display.draw();
 
-            target.clear_color_srgb(
-                (frame_count as f32 / 20.0).sin() * 0.3,
-                (frame_count as f32 / 40.0).sin() * 0.3,
-                (frame_count as f32 / 80.0).sin() * 0.3,
-                1.0,
-            );
+            target.clear_color_srgb(0.9, 0.9, 0.9, 1.0);
             camera.set_scale(Scale::from_log2_factor(
-                (frame_count as f64 / 60.0).sin() * 2.0 + 4.5,
+                (frame_count as f64 / 60.0).sin() * 1.75 + 4.5,
             ));
             render::draw_grid(&mut target, &grid, &mut camera);
 

@@ -10,7 +10,7 @@ lazy_static! {
             140 => {
                 vertex: include_str!("rgba.vert"),
                 fragment: include_str!("rgba.frag"),
-                outputs_srgb: true,
+                outputs_srgb: false,
             },
         )
         .expect("Failed to compile shader")
