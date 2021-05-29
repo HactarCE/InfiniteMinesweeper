@@ -9,7 +9,7 @@ use std::ops::*;
 /// the scale factor is positive.
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub struct Scale {
-    log2_factor: f32,
+    log2_factor: f64,
 }
 impl Default for Scale {
     fn default() -> Self {
@@ -25,12 +25,12 @@ impl fmt::Display for Scale {
 
 impl Scale {
     /// The lower scale limit; i.e. the furthest the player can zoom out.
-    const LOWER_LIMIT: f32 = 8.0;
+    const LOWER_LIMIT: f64 = 8.0;
     /// The upper scale limit; i.e. the furthest the player can zoom in.
-    const UPPER_LIMIT: f32 = 64.0;
+    const UPPER_LIMIT: f64 = 64.0;
 
     /// Creates a `Scale` from a scale factor's base-2 logarithm (e.g. `3.0` = 8:1 scale).
-    pub fn from_log2_factor(log2_factor: f32) -> Self {
+    pub fn from_log2_factor(log2_factor: f64) -> Self {
         Self { log2_factor }
     }
     /// Creates a `Scale` from a scale factor (e.g. `8` = 8:1 scale).
@@ -38,7 +38,7 @@ impl Scale {
     /// # Panics
     ///
     /// This function panics if `factor` is not greater than zero.
-    pub fn from_factor(factor: f32) -> Self {
+    pub fn from_factor(factor: f64) -> Self {
         Self {
             log2_factor: factor.log2(),
         }
@@ -58,15 +58,15 @@ impl Scale {
     }
 
     /// Returns the base-2 logarithm of the scale factor (e.g. -2.0 = 4:1 scale).
-    pub fn log2_factor(self) -> f32 {
+    pub fn log2_factor(self) -> f64 {
         self.log2_factor
     }
     /// Returns the scale factor, which is the length of pixels per tile.
-    pub fn factor(self) -> f32 {
+    pub fn factor(self) -> f64 {
         self.log2_factor().exp2()
     }
     /// Returns the inverse scale factor.
-    pub fn inv_factor(self) -> f32 {
+    pub fn inv_factor(self) -> f64 {
         1.0 / self.factor()
     }
 
@@ -90,45 +90,45 @@ impl Scale {
     }
 }
 
-impl Mul<f32> for Scale {
+impl Mul<f64> for Scale {
     type Output = Self;
 
     /// Scales up / zooms in by a factor.
-    fn mul(self, factor: f32) -> Self {
+    fn mul(self, factor: f64) -> Self {
         Self::from_log2_factor(self.log2_factor + factor.log2())
     }
 }
-impl MulAssign<f32> for Scale {
+impl MulAssign<f64> for Scale {
     /// Scales up / zooms in by a factor.
-    fn mul_assign(&mut self, factor: f32) {
+    fn mul_assign(&mut self, factor: f64) {
         self.log2_factor += factor.log2();
     }
 }
 
-impl Div<f32> for Scale {
+impl Div<f64> for Scale {
     type Output = Self;
 
     /// Scales down / zooms out by a factor.
-    fn div(self, factor: f32) -> Self {
+    fn div(self, factor: f64) -> Self {
         Self::from_log2_factor(self.log2_factor - factor.log2())
     }
 }
-impl DivAssign<f32> for Scale {
+impl DivAssign<f64> for Scale {
     /// Scales down / zooms out by a factor.
-    fn div_assign(&mut self, factor: f32) {
+    fn div_assign(&mut self, factor: f64) {
         self.log2_factor -= factor.log2();
     }
 }
 
 impl Div<Scale> for Scale {
-    type Output = f32;
+    type Output = f64;
 
     /// Computes the ratio between two scales.
     ///
     /// # Panics
     ///
-    /// This operation panics if the result does not fit in an `f32`.
-    fn div(self, other: Self) -> f32 {
+    /// This operation panics if the result does not fit in an `f64`.
+    fn div(self, other: Self) -> f64 {
         (self.log2_factor - other.log2_factor).exp2()
     }
 }

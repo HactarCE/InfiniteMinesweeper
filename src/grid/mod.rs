@@ -1,6 +1,9 @@
+mod camera;
 mod scale;
 mod tile;
 
+pub use camera::Camera;
+pub use scale::Scale;
 pub use tile::*;
 
 use std::collections::HashMap;
