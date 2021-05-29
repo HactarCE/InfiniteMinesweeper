@@ -9,6 +9,7 @@ use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 
+use crate::grid::Scale;
 use crate::render;
 
 lazy_static! {
@@ -98,6 +99,9 @@ pub fn show_gui() -> ! {
                 (frame_count as f32 / 80.0).sin() * 0.3,
                 1.0,
             );
+            camera.set_scale(Scale::from_log2_factor(
+                (frame_count as f64 / 60.0).sin() * 2.0 + 4.5,
+            ));
             render::draw_grid(&mut target, &grid, &mut camera);
 
             // Put it all on the screen.

@@ -1,4 +1,5 @@
 use glium::index::PrimitiveType;
+use glium::uniforms::MinifySamplerFilter;
 use glium::{Frame, IndexBuffer, Program, Surface, VertexBuffer};
 use lazy_static::lazy_static;
 use send_wrapper::SendWrapper;
@@ -72,7 +73,7 @@ pub fn draw_grid(target: &mut glium::Frame, grid: &Grid, camera: &mut Camera) {
             &glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip),
             &shaders::RGBA_PROGRAM,
             &glium::uniform! {
-                spritesheet: textures::OVERLAY.sampled(),
+                spritesheet: textures::OVERLAY.sampled().minify_filter(MinifySamplerFilter::NearestMipmapNearest),
                 sprite_size: [64_u32, 64],
 
                 camera_center: camera.int_center(),

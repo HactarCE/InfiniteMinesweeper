@@ -25,9 +25,9 @@ impl fmt::Display for Scale {
 
 impl Scale {
     /// The lower scale limit; i.e. the furthest the player can zoom out.
-    const LOWER_LIMIT: f64 = 8.0;
+    const LOWER_LIMIT: f64 = 3.0;
     /// The upper scale limit; i.e. the furthest the player can zoom in.
-    const UPPER_LIMIT: f64 = 64.0;
+    const UPPER_LIMIT: f64 = 6.0;
 
     /// Creates a `Scale` from a scale factor's base-2 logarithm (e.g. `3.0` = 8:1 scale).
     pub fn from_log2_factor(log2_factor: f64) -> Self {
