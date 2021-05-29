@@ -9,6 +9,8 @@ use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 
+use crate::render;
+
 lazy_static! {
     static ref EVENT_LOOP: SendWrapper<RefCell<Option<EventLoop<()>>>> =
         SendWrapper::new(RefCell::new(Some(EventLoop::new())));
@@ -25,6 +27,7 @@ pub fn show_gui() -> ! {
 
     // Initialize runtime data.
     let mut grid = crate::grid::Grid::new();
+    let mut camera = crate::grid::Camera::new();
     let mut events_buffer = VecDeque::new();
 
     // Main loop.
@@ -95,6 +98,7 @@ pub fn show_gui() -> ! {
                 (frame_count as f32 / 80.0).sin() * 0.3,
                 1.0,
             );
+            render::draw_grid(&mut target, &grid, &mut camera);
 
             // Put it all on the screen.
             target.finish().expect("Failed to swap buffers");

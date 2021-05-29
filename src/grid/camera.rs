@@ -1,4 +1,4 @@
-use cgmath::{InnerSpace, Matrix4, Point2, SquareMatrix, Vector2, Zero};
+use cgmath::{InnerSpace, Matrix4, Point2, Vector2, Zero};
 
 use super::Scale;
 
@@ -44,12 +44,17 @@ impl Default for Camera {
 }
 
 impl Camera {
+    /// Returns a new camera at the center of the grid.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Returns the width and height of the render target.
-    fn target_dimensions(self) -> (u32, u32) {
+    pub fn target_dimensions(self) -> (u32, u32) {
         self.target_dimensions
     }
     /// Sets the width and height of the render target.
-    fn set_target_dimensions(&mut self, (target_w, target_h): (u32, u32)) {
+    pub fn set_target_dimensions(&mut self, (target_w, target_h): (u32, u32)) {
         self.target_dimensions = (
             std::cmp::max(MIN_TARGET_SIZE, target_w),
             std::cmp::max(MIN_TARGET_SIZE, target_h),
@@ -57,29 +62,29 @@ impl Camera {
     }
     /// Returns the display scaling factor, which does not affect rendering of
     /// tiles but may affect other UI elements.
-    fn dpi(self) -> f32 {
+    pub fn dpi(self) -> f32 {
         self.dpi
     }
     /// Sets the display scaling factor.
-    fn set_dpi(&mut self, dpi: f32) {
+    pub fn set_dpi(&mut self, dpi: f32) {
         self.dpi = dpi;
     }
 
     /// Returns the position of the center of the camera.
-    fn center(self) -> Point2<f64> {
+    pub fn center(self) -> Point2<f64> {
         self.center
     }
     /// Sets the position of the center of the camera.
-    fn set_center(&mut self, pos: Point2<f64>) {
+    pub fn set_center(&mut self, pos: Point2<f64>) {
         self.center = pos;
     }
 
     /// Returns the visual scale of tiles.
-    fn scale(self) -> Scale {
+    pub fn scale(self) -> Scale {
         self.scale
     }
     /// Sets the visual scale of tiles.
-    fn set_scale(&mut self, scale: Scale) {
+    pub fn set_scale(&mut self, scale: Scale) {
         self.scale = scale.clamp();
     }
 
@@ -88,7 +93,7 @@ impl Camera {
     ///
     /// If `invariant_pos` is `None`, then the value returned by `center()` is
     /// used instead.
-    fn scale_to(&mut self, scale: Scale, invariant_pos: Option<Point2<f64>>) {
+    pub fn scale_to(&mut self, scale: Scale, invariant_pos: Option<Point2<f64>>) {
         // Scale, keeping the center position invariant.
         let old_scale = self.scale();
         self.set_scale(scale);
@@ -116,7 +121,7 @@ impl Camera {
     ///
     /// If `invariant_pos` is `None`, then the value returned by `pos()` is
     /// invariant.
-    fn scale_by_log2_factor(&mut self, log2_factor: f64, invariant_pos: Option<Point2<f64>>) {
+    pub fn scale_by_log2_factor(&mut self, log2_factor: f64, invariant_pos: Option<Point2<f64>>) {
         self.scale_to(
             Scale::from_log2_factor(self.scale().log2_factor() + log2_factor),
             invariant_pos,
@@ -127,7 +132,7 @@ impl Camera {
     ///
     /// If `invariant_pos` is `None`, then the value returned by `pos()` is
     /// invariant.
-    fn scale_by_factor(&mut self, factor: f64, invariant_pos: Option<Point2<f64>>) {
+    pub fn scale_by_factor(&mut self, factor: f64, invariant_pos: Option<Point2<f64>>) {
         assert!(
             factor > 0.0,
             "Scale factor must be a positive number, not {}",
@@ -140,13 +145,13 @@ impl Camera {
     ///
     /// If `invariant_pos` is `None`, then the value returned by `pos()` is
     /// invariant.
-    fn snap_scale(&mut self, invariant_pos: Option<Point2<f64>>) {
+    pub fn snap_scale(&mut self, invariant_pos: Option<Point2<f64>>) {
         self.scale_by_factor(self.scale().round() / self.scale(), invariant_pos);
         self.set_scale(self.scale().round()); // Fix any potential rounding error.
     }
 
     /// Returns the abstract "distance" between two cameras.
-    fn distance(a: Self, b: Self) -> f64 {
+    pub fn distance(a: Self, b: Self) -> f64 {
         let avg_scale = average_lerped_scale(a.scale(), b.scale());
         let total_tiles_delta = (b.center() - a.center()).magnitude();
         let total_pixels_delta = total_tiles_delta * avg_scale.factor();
@@ -170,7 +175,7 @@ impl Camera {
     /// panning speed in terms of on-screen pixels rather than tiles, and
     /// interpolates scale factor logarithmically.
     #[must_use = "This method returns a new value instead of mutating its input"]
-    fn lerp(a: Self, b: Self, t: f64) -> Self {
+    pub fn lerp(a: Self, b: Self, t: f64) -> Self {
         let mut ret = a.clone();
 
         // When interpolating position and scale together, we would want the
@@ -220,40 +225,52 @@ impl Camera {
         ret
     }
 
-    // /// Returns the tile transform for this camera.
-    // fn tile_transform(self) -> NdTileTransform<D> {
-    //     let (render_tile_layer, render_tile_scale) = self.render_tile_layer_and_scale();
-    //     let camera_transform = Matrix4::identity();
-    //     let camera_center = if render_tile_scale.log2_factor().fract().is_zero() {
-    //         // When the scale factor is an exact power of two, round to the
-    //         // nearest pixel to make the final image more crisp. This is
-    //         // disabled otherwise because it causes noticeable jiggling during
-    //         // interpolation.
-    //         let mut center_in_pixel_units = self.scale.tiles_to_units(self.center);
-    //         center_in_pixel_units = center_in_pixel_units.round().to_fixedvec();
-    //         // Offset by half a pixel if the target dimensions are odd, so that
-    //         // tiles boundaries line up with pixel boundaries.
-    //         let (target_w, target_h) = self.target_dimensions();
-    //         if target_w % 2 == 1 {
-    //             center_in_pixel_units[X] += 0.5_f64;
-    //         }
-    //         if target_h % 2 == 1 {
-    //             center_in_pixel_units[Y] += 0.5_f64;
-    //         }
-    //         self.scale.units_to_tiles(center_in_pixel_units)
-    //     } else {
-    //         self.center.clone()
-    //     };
+    /// Returns an integer tile position near the center of the camera.
+    pub fn int_center(self) -> [i32; 2] {
+        [self.center.x as i32, self.center.y as i32]
+    }
 
-    //     TileTransform2D::new(
-    //         camera_center,
-    //         render_tile_layer,
-    //         render_tile_scale,
-    //         camera_transform,
-    //         ProjectionType::Orthographic,
-    //         self.target_dimensions(),
-    //     )
-    // }
+    /// Returns the tile transform matrix relative to `int_center()`.
+    pub fn gl_matrix(self) -> Matrix4<f32> {
+        let [int_x, int_y] = self.int_center();
+        let int_center_f64 = Point2::new(int_x as f64, int_y as f64);
+        let mut displacement = -(self.center - int_center_f64);
+        if self.scale.log2_factor().fract().is_zero() {
+            // When the scale factor is an exact power of two, round to the
+            // nearest pixel to make the final image more crisp. This is
+            // disabled otherwise because it causes noticeable jiggling during
+            // interpolation.
+            let mut pixel_displacement = displacement * self.scale.factor();
+            pixel_displacement.x = pixel_displacement.x.round();
+            pixel_displacement.y = pixel_displacement.y.round();
+            // Offset by half a pixel if the target dimensions are odd, so that
+            // tile boundaries line up with pixel boundaries.
+            let (target_w, target_h) = self.target_dimensions();
+            if target_w % 2 == 1 {
+                pixel_displacement.x += 0.5_f64;
+            }
+            if target_h % 2 == 1 {
+                pixel_displacement.y += 0.5_f64;
+            }
+            displacement = pixel_displacement / self.scale.factor();
+        }
+
+        let scale_matrix = cgmath::Matrix4::from_scale(self.scale.factor());
+        let translate_matrix = cgmath::Matrix4::from_translation(displacement.extend(0.0));
+        let tile_transform_matrix = (scale_matrix * translate_matrix).cast().unwrap();
+
+        self.projection_matrix() * tile_transform_matrix
+    }
+
+    /// Returns the orthographic projection matrix based on the target
+    /// dimensions.
+    fn projection_matrix(self) -> cgmath::Matrix4<f32> {
+        let (target_w, target_h) = self.target_dimensions;
+        let sx = 2.0 / target_w as f32;
+        let sy = 2.0 / target_h as f32;
+        let sz = 1.0;
+        cgmath::Matrix4::from_nonuniform_scale(sx, sy, sz)
+    }
 
     // /// Returns a rectangle of tiles that are at least partially visible,
     // /// rounded outward to the nearest render tile.

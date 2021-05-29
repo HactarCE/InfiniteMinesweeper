@@ -8,6 +8,9 @@
 
 mod grid;
 mod gui;
+mod render;
+
+use gui::DISPLAY;
 
 const TITLE: &str = "HMines Infinite";
 
