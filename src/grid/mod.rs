@@ -1,3 +1,4 @@
+mod scale;
 mod tile;
 
 pub use tile::*;
