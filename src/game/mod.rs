@@ -1,8 +1,11 @@
-use cgmath::Vector2;
+use cgmath::{Point2, Vector2};
+use directories::ProjectDirs;
 use glium::glutin::event::{
     ElementState, ModifiersState, MouseButton, MouseScrollDelta, ScanCode, VirtualKeyCode,
     WindowEvent,
 };
+use std::fmt;
+use std::str::FromStr;
 use std::time::Duration;
 
 mod camera;
@@ -36,6 +39,30 @@ pub struct Game {
     keys: input::KeysPressed,
     /// Set of pressed modifiers.
     modifiers: ModifiersState,
+}
+impl fmt::Display for Game {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let cam_pos = self.camera_target.center();
+        write!(f, "{},{}*\n\n{}", cam_pos.x, cam_pos.y, self.grid)
+    }
+}
+impl FromStr for Game {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut ret = Self::new();
+
+        let (cam_pos, grid) = s.split_once('*').ok_or(())?;
+        let (cam_x, cam_y) = cam_pos.split_once(',').ok_or(())?;
+
+        ret.camera_target.set_center(Point2::new(
+            cam_x.trim().parse().map_err(|_| ())?,
+            cam_y.trim().parse().map_err(|_| ())?,
+        ));
+        ret.grid = grid.parse()?;
+
+        Ok(ret)
+    }
 }
 impl Game {
     /// Returns a new game.
@@ -111,7 +138,11 @@ impl Game {
         }
     }
 
-    fn handle_key_press(&mut self, sc: ScanCode, vkc: Option<VirtualKeyCode>) {}
+    fn handle_key_press(&mut self, sc: ScanCode, vkc: Option<VirtualKeyCode>) {
+        if vkc == Some(VirtualKeyCode::S) && self.modifiers == ModifiersState::CTRL {
+            self.save_to_file();
+        }
+    }
     fn handle_key_release(&mut self, sc: ScanCode, vkc: Option<VirtualKeyCode>) {}
 
     fn handle_mouse_wheel(&mut self, delta: MouseScrollDelta) {
@@ -192,7 +223,7 @@ impl Game {
         let mut dy = 0.0;
         let mut dz = 0.0;
 
-        {
+        if !self.modifiers.ctrl() && !self.modifiers.alt() && !self.modifiers.logo() {
             use input::sc;
             dx += self.keys[sc::D] as u32 as f64;
             dx -= self.keys[sc::A] as u32 as f64;
@@ -236,5 +267,37 @@ impl Game {
         } else {
             false
         }
+    }
+
+    pub fn save_to_file(&self) {
+        match self.try_save_to_file() {
+            Ok(()) => eprintln!(
+                "Saved game to {}",
+                Self::get_data_file_path().unwrap().display(),
+            ),
+            Err(()) => eprintln!("Failed to save game data"),
+        }
+    }
+    pub fn load_from_file() -> Self {
+        Self::try_load_from_file().unwrap_or_else(|| {
+            eprintln!("Unable to load existing game data; starting new game");
+            Game::new()
+        })
+    }
+
+    pub fn try_save_to_file(&self) -> Result<(), ()> {
+        std::fs::write(Self::get_data_file_path().ok_or(())?, self.to_string()).map_err(|_| ())
+    }
+    pub fn try_load_from_file() -> Option<Self> {
+        std::fs::read_to_string(Self::get_data_file_path()?)
+            .ok()?
+            .parse()
+            .ok()
+    }
+    fn get_data_file_path() -> Option<std::path::PathBuf> {
+        let dirs = ProjectDirs::from("", "", "HMinesInfinite")?;
+        let data_dir = dirs.data_dir();
+        std::fs::create_dir_all(data_dir).ok()?;
+        Some(data_dir.join("data.txt"))
     }
 }

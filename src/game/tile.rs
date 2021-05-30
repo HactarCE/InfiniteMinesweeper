@@ -1,6 +1,6 @@
 /// Tile in the Minesweeper grid, packed into a single byte.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub(super) struct PackedTile(u8);
+pub(super) struct PackedTile(pub(super) u8);
 impl Default for PackedTile {
     fn default() -> Self {
         Tile::default().pack()
@@ -9,10 +9,14 @@ impl Default for PackedTile {
 impl PackedTile {
     /// Unpacks the `Tile` from a single byte.
     pub(super) fn unpack(self) -> Tile {
-        if self.0 == 0xFF {
+        if self.0 == '!' as u8 {
             Tile::Mine
-        } else if self.0 < 0x80 {
-            Tile::Number(self.0)
+        } else if self.0 == ' ' as u8 {
+            Tile::Number(0)
+        } else if self.0 <= '9' as u8 {
+            Tile::Number(self.0 - '0' as u8)
+        } else if self.0 < 0x60 {
+            Tile::Number(self.0 - 'A' as u8 + 10)
         } else {
             Tile::Covered(
                 FlagState::from((self.0 >> 2) & 0b11),
@@ -41,9 +45,11 @@ impl Tile {
     /// Packs the tile into a single byte.
     pub(super) fn pack(self) -> PackedTile {
         match self {
-            Tile::Covered(f, h) => PackedTile(0x80 | (f as u8) << 2 | h as u8),
-            Tile::Number(n) => PackedTile(n),
-            Tile::Mine => PackedTile(0xFF),
+            Tile::Covered(f, h) => PackedTile(0x60 | (f as u8) << 2 | h as u8),
+            Tile::Number(0) => PackedTile(' ' as u8),
+            Tile::Number(n) if n < 10 => PackedTile(n + '0' as u8),
+            Tile::Number(n) => PackedTile(n - 10 + 'A' as u8),
+            Tile::Mine => PackedTile('!' as u8),
         }
     }
 
@@ -137,18 +143,9 @@ impl From<u8> for HiddenState {
 
 #[cfg(test)]
 #[test]
-fn test_packed_cell() {
-    let values: &[Tile] = &[
+fn test_packed_tile() {
+    let tiles: &[Tile] = &[
         Tile::Mine,
-        Tile::Number(0),
-        Tile::Number(1),
-        Tile::Number(2),
-        Tile::Number(3),
-        Tile::Number(4),
-        Tile::Number(5),
-        Tile::Number(6),
-        Tile::Number(7),
-        Tile::Number(8),
         Tile::Covered(FlagState::None, HiddenState::Unknown),
         Tile::Covered(FlagState::None, HiddenState::Safe),
         Tile::Covered(FlagState::None, HiddenState::Mine),
@@ -159,7 +156,12 @@ fn test_packed_cell() {
         Tile::Covered(FlagState::Question, HiddenState::Safe),
         Tile::Covered(FlagState::Question, HiddenState::Mine),
     ];
-    for &v in values {
-        assert_eq!(v, v.pack().unpack());
+    for &t in tiles {
+        assert_eq!(t, t.pack().unpack());
+    }
+
+    for n in 0..32 {
+        let t = Tile::Number(n);
+        assert_eq!(t, t.pack().unpack());
     }
 }

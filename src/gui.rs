@@ -26,13 +26,12 @@ pub fn show_gui() -> ! {
     let display = &**DISPLAY;
 
     // Initialize runtime data.
-    let mut game = Game::new();
+    let mut game = Game::load_from_file();
     let mut events_buffer = VecDeque::new();
 
     // Main loop.
     let mut last_frame_time = Instant::now();
     let mut next_frame_time = Instant::now();
-    let mut frame_count = 0;
     let ev_loop = EVENT_LOOP.borrow_mut().take().unwrap();
     ev_loop.run(move |event, _ev_loop, control_flow| {
         // Handle events.
@@ -55,7 +54,9 @@ pub fn show_gui() -> ! {
             },
 
             // The program is about to exit.
-            Some(Event::LoopDestroyed) => (),
+            Some(Event::LoopDestroyed) =>
+                game.save_to_file()
+            ,
 
             // Queue the event to be handled next time we render
             // everything.
@@ -66,8 +67,6 @@ pub fn show_gui() -> ! {
         }
 
         if do_frame && next_frame_time <= now {
-            frame_count += 1;
-
             let frame_duration = Duration::from_secs_f64(1.0 / 60.0);
 
             next_frame_time = now + frame_duration;

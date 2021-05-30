@@ -1,7 +1,9 @@
-use std::collections::HashMap;
-
 use itertools::Itertools;
 use rand::Rng;
+use std::collections::HashMap;
+use std::convert::TryInto;
+use std::fmt;
+use std::str::FromStr;
 
 use super::tile::{FlagState, HiddenState, PackedTile, Tile};
 use super::MINE_DENSITY;
@@ -11,6 +13,39 @@ pub const CHUNK_SIZE: usize = 2_usize.pow(CHUNK_SIZE_LOG_2 as u32);
 
 #[derive(Debug, Default, Clone)]
 pub struct Grid(HashMap<ChunkPos, Chunk>);
+impl fmt::Display for Grid {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for (ChunkPos(chunk_x, chunk_y), chunk) in &self.0 {
+            write!(f, "@{},{}\n", chunk_x, chunk_y)?;
+            write!(f, "{}\n", chunk)?;
+        }
+        Ok(())
+    }
+}
+impl FromStr for Grid {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut ret = Self::new();
+        for chunk_str in s.split("@") {
+            if chunk_str.trim().is_empty() {
+                continue;
+            }
+            let rest = chunk_str;
+            let (chunk_x, rest) = rest.split_once(',').ok_or(())?;
+            let (chunk_y, rest) = rest.split_once('\n').ok_or(())?;
+            let chunk = rest.trim().parse()?;
+            ret.0.insert(
+                ChunkPos(
+                    chunk_x.trim().parse().map_err(|_| ())?,
+                    chunk_y.trim().parse().map_err(|_| ())?,
+                ),
+                chunk,
+            );
+        }
+        Ok(ret)
+    }
+}
 impl Grid {
     /// Returns a new empty grid.
     pub fn new() -> Self {
@@ -137,6 +172,43 @@ impl Default for Chunk {
             tiles: [PackedTile::default(); CHUNK_SIZE * CHUNK_SIZE],
             all_mines_placed: false,
         }
+    }
+}
+impl fmt::Display for Chunk {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for row in self.tiles.chunks(CHUNK_SIZE) {
+            write!(f, ":")?;
+            for tile in row {
+                write!(f, "{}", tile.0 as char)?;
+            }
+            write!(f, ";\n")?;
+        }
+        if self.all_mines_placed {
+            write!(f, ".")?;
+        } else {
+            write!(f, "?")?;
+        }
+        Ok(())
+    }
+}
+impl FromStr for Chunk {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut tiles = vec![];
+        let mut all_mines_placed = false;
+        for ch in s.chars() {
+            match ch {
+                ':' | ';' | '\n' => (),
+                '.' => all_mines_placed = true,
+                '?' => all_mines_placed = false,
+                _ => tiles.push(PackedTile(ch as u8)),
+            }
+        }
+        Ok(Self {
+            tiles: tiles.try_into().map_err(|_| ())?,
+            all_mines_placed,
+        })
     }
 }
 impl Chunk {
