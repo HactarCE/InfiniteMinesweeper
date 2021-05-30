@@ -2,6 +2,7 @@ use glium::glutin::event::{
     ElementState, ModifiersState, MouseButton, MouseScrollDelta, ScanCode, VirtualKeyCode,
     WindowEvent,
 };
+use std::time::Duration;
 
 mod camera;
 mod grid;
@@ -20,6 +21,8 @@ pub struct Game {
     pub grid: Grid,
     /// Camera.
     pub camera: Camera,
+    /// Interpolation target camera.
+    pub camera_target: Camera,
 
     /// Position of the mouse cursor.
     cursor_pos: Option<(u32, u32)>,
@@ -60,6 +63,7 @@ impl Game {
                         self.camera.set_scale(new_scale);
                     }
                 }
+                self.camera_target = self.camera;
             }
             self.moved_this_frame = true;
         }
@@ -117,7 +121,7 @@ impl Game {
         let dy = match delta {
             MouseScrollDelta::LineDelta(_dx, dy) => dy as f64,
             MouseScrollDelta::PixelDelta(delta) => delta.y,
-        } / 2.0;
+        };
 
         let invariant_pos = if let Some(pixel) = self.cursor_pos {
             Some(self.camera.pixel_to_tile_coords(pixel))
@@ -125,7 +129,7 @@ impl Game {
             None
         };
 
-        self.camera.scale_by_log2_factor(dy, invariant_pos);
+        self.camera_target.scale_by_log2_factor(dy, invariant_pos);
     }
 
     fn handle_mouse_press(&mut self, button: MouseButton) {
@@ -181,5 +185,15 @@ impl Game {
         }
     }
 
-    pub fn do_frame(&mut self) {}
+    pub fn do_frame(&mut self, frame_duration: Duration) {
+        self.camera_target
+            .set_target_dimensions(self.camera.target_dimensions());
+
+        if !self.moved_this_frame {
+            self.camera_target.snap_scale(None);
+        }
+
+        self.camera
+            .advance_interpolation(self.camera_target, frame_duration);
+    }
 }

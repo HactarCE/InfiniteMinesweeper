@@ -29,8 +29,14 @@ impl Scale {
     /// The upper scale limit; i.e. the furthest the player can zoom in.
     const UPPER_LIMIT: f64 = 6.0;
 
-    /// Creates a `Scale` from a scale factor's base-2 logarithm (e.g. `3.0` = 8:1 scale).
+    /// Creates a `Scale` from a scale factor's base-2 logarithm (e.g. `3.0` =
+    /// 8:1 scale).
+    ///
+    /// # Panics
+    ///
+    /// This function panics if `log2_factor` is not finite.
     pub fn from_log2_factor(log2_factor: f64) -> Self {
+        assert!(log2_factor.is_finite());
         Self { log2_factor }
     }
     /// Creates a `Scale` from a scale factor (e.g. `8` = 8:1 scale).
@@ -39,9 +45,7 @@ impl Scale {
     ///
     /// This function panics if `factor` is not greater than zero.
     pub fn from_factor(factor: f64) -> Self {
-        Self {
-            log2_factor: factor.log2(),
-        }
+        Self::from_log2_factor(factor.log2())
     }
 
     /// Clamps the scale to the lower and upper limits. This is not

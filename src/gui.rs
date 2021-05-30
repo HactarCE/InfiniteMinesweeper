@@ -77,9 +77,10 @@ pub fn show_gui() -> ! {
             }
             *control_flow = ControlFlow::WaitUntil(next_frame_time);
 
-            if let Some(delta) = now.checked_duration_since(last_frame_time) {
-                // TODO: give time delta to egui if egui wants it.
-            }
+            let frame_duration = now
+                .checked_duration_since(last_frame_time)
+                .unwrap_or(frame_duration);
+            // TODO: give `frame_duration` to egui if egui wants it
             last_frame_time = now;
 
             for ev in events_buffer.drain(..) {
@@ -96,7 +97,7 @@ pub fn show_gui() -> ! {
                 }
             }
 
-            game.do_frame();
+            game.do_frame(frame_duration);
 
             // Draw everything.
             let mut target = display.draw();

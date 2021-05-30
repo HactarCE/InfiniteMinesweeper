@@ -1,4 +1,5 @@
 use cgmath::{InnerSpace, Matrix4, Point2, Vector2, Zero};
+use std::time::Duration;
 
 use super::{Scale, TilePos};
 
@@ -16,6 +17,12 @@ const MIN_TARGET_SIZE: u32 = 10;
 /// could be changed to something like sqrt(h²+w²) / 5. Here's a Desmos link if
 /// you're curious: https://www.desmos.com/calculator/1yxv7mglnj.
 pub(super) const PIXELS_PER_2X_SCALE: f64 = 400.0;
+
+/// Distance beneath which to "snap" to the target, for interpolation strategies
+/// like exponential decay that never actually reach their target.
+const INTERPOLATION_DISTANCE_THRESHOLD: f64 = 0.001;
+/// Exponential decay constant used for interpolation.
+const INTERPOLATION_DECAY_CONSTANT: f64 = 0.04;
 
 /// 2D camera.
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -175,7 +182,7 @@ impl Camera {
     /// panning speed in terms of on-screen pixels rather than tiles, and
     /// interpolates scale factor logarithmically.
     #[must_use = "This method returns a new value instead of mutating its input"]
-    pub fn lerp(a: Self, b: Self, t: f64) -> Self {
+    fn lerp(a: Self, b: Self, t: f64) -> Self {
         let mut ret = a.clone();
 
         // When interpolating position and scale together, we would want the
@@ -223,6 +230,27 @@ impl Camera {
         ret.center += tiles_delta;
 
         ret
+    }
+    /// Advances the camera by one frame toward another camera.
+    ///
+    /// Returns `true` if the target has been reached, or `false` otherwise.
+    pub fn advance_interpolation(&mut self, target: Self, frame_duration: Duration) -> bool {
+        if *self == target {
+            true
+        } else if Self::distance(*self, target) < INTERPOLATION_DISTANCE_THRESHOLD {
+            *self = target;
+            true
+        } else {
+            let t = frame_duration.as_secs_f64() / INTERPOLATION_DECAY_CONSTANT;
+            *self = Self::lerp(
+                *self,
+                target,
+                // Clamp to 0 <= t <= 1. `min()` comes first so that `NaN`s
+                // will become `1.0`.
+                t.min(1.0).max(0.0),
+            );
+            false
+        }
     }
 
     /// Returns an integer tile position near the center of the camera.
@@ -321,8 +349,8 @@ fn average_lerped_scale(s1: Scale, s2: Scale) -> Scale {
     // ------ = - -----------------
     // tiles      2^(-s₁) - 2^(-s₂)
 
-    let denominator = s1.factor() - s2.factor();
     let numerator = 2.0_f64.ln() * (s1.log2_factor() - s2.log2_factor());
+    let denominator = s1.inv_factor() - s2.inv_factor();
     if numerator.is_zero() || denominator.is_zero() {
         // The expression is undefined at s₁ = s₂, but then the average of s₁
         // and s₂ is trivial.
