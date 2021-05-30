@@ -1,13 +1,11 @@
-use glium::index::PrimitiveType;
-use glium::uniforms::MinifySamplerFilter;
-use glium::{Frame, IndexBuffer, Program, Surface, VertexBuffer};
+use glium::{Surface, VertexBuffer};
 use lazy_static::lazy_static;
 use send_wrapper::SendWrapper;
 
 mod shaders;
 mod textures;
 
-use crate::grid::{Camera, ChunkPos, Grid, Tile, TilePos, CHUNK_SIZE};
+use crate::game::{Camera, ChunkPos, Grid, Tile, TilePos, CHUNK_SIZE};
 
 const TILE_BATCH_SIZE: usize = 4096;
 

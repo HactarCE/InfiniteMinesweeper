@@ -3,7 +3,7 @@ use glium::uniforms::{MinifySamplerFilter, Sampler};
 use lazy_static::lazy_static;
 use send_wrapper::SendWrapper;
 
-use crate::grid::{FlagState, Tile};
+use crate::game::{FlagState, Tile};
 
 fn write_tex_mipmap(t: &SrgbTexture2d, level: u32, image: RawImage2d<'_, u8>) {
     let mipmap_level = t.mipmap(level).expect("Missing mipmap level");

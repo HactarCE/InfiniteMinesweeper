@@ -6,7 +6,7 @@
 #![warn(clippy::all)]
 #![deny(clippy::correctness)]
 
-mod grid;
+mod game;
 mod gui;
 mod render;
 

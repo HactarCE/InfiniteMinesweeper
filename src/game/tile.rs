@@ -38,12 +38,28 @@ impl Default for Tile {
     }
 }
 impl Tile {
-    /// Packs the `Tile` into a single byte.
+    /// Packs the tile into a single byte.
     pub(super) fn pack(self) -> PackedTile {
         match self {
             Tile::Covered(f, h) => PackedTile(0x80 | (f as u8) << 2 | h as u8),
             Tile::Number(n) => PackedTile(n),
             Tile::Mine => PackedTile(0xFF),
+        }
+    }
+
+    /// Toggles flag on the tile.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub fn toggle_flag(self) -> Tile {
+        match self {
+            Tile::Covered(f, h) => {
+                let new_f = match f {
+                    FlagState::None => FlagState::Flag,
+                    FlagState::Flag => FlagState::None,
+                    FlagState::Question => FlagState::None,
+                };
+                Tile::Covered(new_f, h)
+            }
+            _ => self,
         }
     }
 }

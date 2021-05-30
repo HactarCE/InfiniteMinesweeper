@@ -1,9 +1,11 @@
 use cgmath::Point2;
+use glium::glutin::event::MouseButton;
 
 const DRAG_THRESHOLD: u32 = 1;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Drag {
+    pub button: MouseButton,
     pub tile_coords: Point2<f64>,
     pub initial_scale_factor: f64,
 

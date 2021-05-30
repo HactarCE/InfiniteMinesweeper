@@ -1,12 +1,6 @@
-mod camera;
-mod scale;
-mod tile;
-
-pub use camera::Camera;
-pub use scale::Scale;
-pub use tile::*;
-
 use std::collections::HashMap;
+
+use super::tile::{PackedTile, Tile};
 
 pub const CHUNK_SIZE_LOG_2: usize = 6;
 pub const CHUNK_SIZE: usize = 2_usize.pow(CHUNK_SIZE_LOG_2 as u32);
@@ -39,22 +33,12 @@ impl Grid {
     pub fn set_tile(&mut self, pos: TilePos, tile: Tile) {
         self.get_chunk_mut(pos.chunk()).set_tile(pos, tile);
     }
-}
 
-/// Tile coordinates.
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct TilePos(pub i32, pub i32);
-impl TilePos {
-    /// Returns the position of the chunk containing the tile position.
-    pub fn chunk(self) -> ChunkPos {
-        let TilePos(x, y) = self;
-        ChunkPos(x >> CHUNK_SIZE_LOG_2, y >> CHUNK_SIZE_LOG_2)
+    /// Toggles flag on a tile in the grid.
+    pub fn toggle_flag(&mut self, pos: TilePos) {
+        self.set_tile(pos, self.get_tile(pos).toggle_flag());
     }
 }
-
-/// Global coordinates of a chunk.
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct ChunkPos(pub i32, pub i32);
 
 /// Square chunk of tiles.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -82,3 +66,18 @@ impl Chunk {
         self.0[Self::index_of_tile(pos)] = tile.pack();
     }
 }
+
+/// Tile coordinates.
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct TilePos(pub i32, pub i32);
+impl TilePos {
+    /// Returns the position of the chunk containing the tile position.
+    pub fn chunk(self) -> ChunkPos {
+        let TilePos(x, y) = self;
+        ChunkPos(x >> CHUNK_SIZE_LOG_2, y >> CHUNK_SIZE_LOG_2)
+    }
+}
+
+/// Global coordinates of a chunk.
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct ChunkPos(pub i32, pub i32);

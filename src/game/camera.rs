@@ -1,7 +1,6 @@
 use cgmath::{InnerSpace, Matrix4, Point2, Vector2, Zero};
 
 use super::{Scale, TilePos};
-use crate::input::drag::{Drag, DragKind};
 
 /// Minimum target width & height, to avoid divide-by-zero errors.
 const MIN_TARGET_SIZE: u32 = 10;
@@ -16,7 +15,7 @@ const MIN_TARGET_SIZE: u32 = 10;
 /// proportional to the size of the window, so at some point in the future this
 /// could be changed to something like sqrt(h²+w²) / 5. Here's a Desmos link if
 /// you're curious: https://www.desmos.com/calculator/1yxv7mglnj.
-const PIXELS_PER_2X_SCALE: f64 = 400.0;
+pub(super) const PIXELS_PER_2X_SCALE: f64 = 400.0;
 
 /// 2D camera.
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -288,24 +287,6 @@ impl Camera {
     pub fn pixel_to_tile_pos(self, pixel: (u32, u32)) -> TilePos {
         let t = self.pixel_to_tile_coords(pixel);
         TilePos(t.x.floor() as i32, t.y.floor() as i32)
-    }
-
-    /// Updates camera according to a drag.
-    pub fn drag(&mut self, drag: Drag) {
-        match drag.kind {
-            DragKind::Pan => {
-                let start = drag.tile_coords;
-                let end = self.pixel_to_tile_coords(drag.cursor_end);
-                self.set_center(self.center + (start - end));
-            }
-            DragKind::Scale => {
-                let y1 = drag.cursor_start.1 as f64;
-                let y2 = drag.cursor_end.1 as f64;
-                let delta = (y2 - y1) / -PIXELS_PER_2X_SCALE;
-                let initial = Scale::from_factor(drag.initial_scale_factor);
-                self.set_scale(Scale::from_log2_factor(initial.log2_factor() + delta));
-            }
-        }
     }
 }
 
