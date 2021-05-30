@@ -1,6 +1,6 @@
 use glium::glutin::event::{Event, StartCause, WindowEvent};
 use glium::glutin::event_loop::{ControlFlow, EventLoop};
-use glium::glutin::window::{Icon, WindowBuilder};
+use glium::glutin::window::WindowBuilder;
 use glium::glutin::ContextBuilder;
 use lazy_static::lazy_static;
 use send_wrapper::SendWrapper;

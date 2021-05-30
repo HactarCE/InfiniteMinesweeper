@@ -138,12 +138,12 @@ impl Game {
         }
     }
 
-    fn handle_key_press(&mut self, sc: ScanCode, vkc: Option<VirtualKeyCode>) {
+    fn handle_key_press(&mut self, _sc: ScanCode, vkc: Option<VirtualKeyCode>) {
         if vkc == Some(VirtualKeyCode::S) && self.modifiers == ModifiersState::CTRL {
             self.save_to_file();
         }
     }
-    fn handle_key_release(&mut self, sc: ScanCode, vkc: Option<VirtualKeyCode>) {}
+    fn handle_key_release(&mut self, _sc: ScanCode, _vkc: Option<VirtualKeyCode>) {}
 
     fn handle_mouse_wheel(&mut self, delta: MouseScrollDelta) {
         let dy = match delta {
