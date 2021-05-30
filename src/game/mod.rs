@@ -44,28 +44,24 @@ impl Game {
     }
 
     /// Updates camera according to a drag.
-    pub fn update_camera_for_drag(&mut self) {
-        if let Some(drag) = &mut self.drag {
-            if drag.past_threshold {
-                match drag.kind {
-                    input::DragKind::Pan => {
-                        let start = drag.tile_coords;
-                        let end = self.camera.pixel_to_tile_coords(drag.cursor_end);
-                        let new_center = self.camera.center() + (start - end);
-                        self.camera.set_center(new_center);
-                    }
-                    input::DragKind::Scale => {
-                        let y1 = drag.cursor_start.1 as f64;
-                        let y2 = drag.cursor_end.1 as f64;
-                        let delta = (y2 - y1) / -camera::PIXELS_PER_2X_SCALE;
-                        let initial = Scale::from_factor(drag.initial_scale_factor);
-                        let new_scale = Scale::from_log2_factor(initial.log2_factor() + delta);
-                        self.camera.set_scale(new_scale);
-                    }
+    pub fn update_camera_for_drag(cam: &mut Camera, drag: input::Drag) {
+        if drag.past_threshold {
+            match drag.kind {
+                input::DragKind::Pan => {
+                    let start = drag.tile_coords;
+                    let end = cam.pixel_to_tile_coords(drag.cursor_end);
+                    let new_center = cam.center() + (start - end);
+                    cam.set_center(new_center);
                 }
-                self.camera_target = self.camera;
+                input::DragKind::Scale => {
+                    let y1 = drag.cursor_start.1 as f64;
+                    let y2 = drag.cursor_end.1 as f64;
+                    let delta = (y2 - y1) / -camera::PIXELS_PER_2X_SCALE;
+                    let initial = Scale::from_factor(drag.initial_scale_factor);
+                    let new_scale = Scale::from_log2_factor(initial.log2_factor() + delta);
+                    cam.set_scale(new_scale);
+                }
             }
-            self.moved_this_frame = true;
         }
     }
 
@@ -95,7 +91,8 @@ impl Game {
                 if let Some(d) = &mut self.drag {
                     d.update_cursor_end(pos);
                     if d.past_threshold {
-                        self.update_camera_for_drag();
+                        Self::update_camera_for_drag(&mut self.camera, *d);
+                        Self::update_camera_for_drag(&mut self.camera_target, *d);
                     }
                 }
             }
@@ -129,7 +126,9 @@ impl Game {
             None
         };
 
-        self.camera_target.scale_by_log2_factor(dy, invariant_pos);
+        if !self.is_drag_scaling() {
+            self.camera_target.scale_by_log2_factor(dy, invariant_pos);
+        }
     }
 
     fn handle_mouse_press(&mut self, button: MouseButton) {
@@ -189,11 +188,28 @@ impl Game {
         self.camera_target
             .set_target_dimensions(self.camera.target_dimensions());
 
-        if !self.moved_this_frame {
+        if self.moved_this_frame || self.drag.is_some() {
+            self.moved_this_frame = false;
+        } else {
             self.camera_target.snap_scale(None);
         }
 
         self.camera
             .advance_interpolation(self.camera_target, frame_duration);
+    }
+
+    fn is_drag_panning(&self) -> bool {
+        if let Some(d) = self.drag {
+            d.kind == input::DragKind::Pan
+        } else {
+            false
+        }
+    }
+    fn is_drag_scaling(&self) -> bool {
+        if let Some(d) = self.drag {
+            d.kind == input::DragKind::Scale
+        } else {
+            false
+        }
     }
 }
