@@ -32,17 +32,21 @@ lazy_static! {
         let raw_img_32 = include_bytes!("tiles_32.png");
         let raw_img_16 = include_bytes!("tiles_16.png");
         let raw_img_8 = include_bytes!("tiles_8.png");
+        let raw_img_4 = include_bytes!("tiles_4.png");
+        let raw_img_2 = include_bytes!("tiles_2.png");
 
         let t = SrgbTexture2d::with_mipmaps(
             &**crate::DISPLAY,
             load_rgba_image(raw_img_64),
-            MipmapsOption::EmptyMipmapsMax(3),
+            MipmapsOption::EmptyMipmapsMax(5),
         )
         .expect("Failed to create texture");
 
         write_tex_mipmap(&t, 1, load_rgba_image(raw_img_32));
         write_tex_mipmap(&t, 2, load_rgba_image(raw_img_16));
         write_tex_mipmap(&t, 3, load_rgba_image(raw_img_8));
+        write_tex_mipmap(&t, 4, load_rgba_image(raw_img_4));
+        write_tex_mipmap(&t, 5, load_rgba_image(raw_img_2));
 
         SendWrapper::new(t)
     };
