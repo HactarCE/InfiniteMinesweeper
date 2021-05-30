@@ -62,6 +62,23 @@ impl Tile {
             _ => self,
         }
     }
+
+    /// Returns `true` if the tile is a mine or `false` if it might not be.
+    pub fn is_mine(self) -> bool {
+        match self {
+            Tile::Covered(_, HiddenState::Mine) => true,
+            Tile::Mine => true,
+            _ => false,
+        }
+    }
+    /// Returns `true` if the tile is a flag or a revealed mine.
+    pub fn is_assumed_mine(self) -> bool {
+        match self {
+            Tile::Covered(FlagState::Flag, _) => true,
+            Tile::Mine => true,
+            _ => false,
+        }
+    }
 }
 
 /// Flag or question mark annotation added by the player.

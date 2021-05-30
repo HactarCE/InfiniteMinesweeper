@@ -5,6 +5,32 @@ use std::ops::Index;
 
 const DRAG_THRESHOLD: u32 = 3;
 
+pub const KEYBD_MOVE_SPEED: f64 = 1000.0;
+pub const KEYBD_SCALE_SPEED: f64 = 4.0;
+
+// Define keyboard scancodes. OSX scancodes are from
+// https://eastmanreference.com/complete-list-of-applescript-key-codes
+#[cfg(any(target_os = "macos"))]
+pub mod sc {
+    pub const W: u32 = 13;
+    pub const A: u32 = 0;
+    pub const S: u32 = 1;
+    pub const D: u32 = 2;
+    pub const Q: u32 = 12;
+    pub const E: u32 = 14;
+    pub const Z: u32 = 6;
+}
+#[cfg(not(any(target_os = "macos")))]
+pub mod sc {
+    pub const W: u32 = 17;
+    pub const A: u32 = 30;
+    pub const S: u32 = 31;
+    pub const D: u32 = 32;
+    pub const Q: u32 = 16;
+    pub const E: u32 = 18;
+    pub const Z: u32 = 44;
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct Drag {
     pub button: MouseButton,
