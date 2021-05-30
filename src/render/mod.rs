@@ -47,9 +47,15 @@ lazy_static! {
         VertexBuffer::empty_dynamic(&**crate::DISPLAY, TILE_BATCH_SIZE)
             .expect("Failed to create vertex buffer")
     );
+    static ref TILE_INSTANCES_OVERFLOW_VBO: SendWrapper<VertexBuffer<TileAttr>> = SendWrapper::new(
+        VertexBuffer::empty_dynamic(&**crate::DISPLAY, TILE_BATCH_SIZE)
+            .expect("Failed to create vertex buffer")
+    );
 }
 
 pub fn draw_grid(target: &mut glium::Frame, grid: &Grid, camera: &mut Camera) {
+    target.clear_color_srgb(0.2, 0.2, 0.2, 1.0);
+
     // Update target dimensisons and get camera data.
     camera.set_target_dimensions(target.get_dimensions());
     let tile_transform_matrix: [[f32; 4]; 4] = camera.gl_matrix().into();
@@ -102,7 +108,18 @@ pub fn draw_grid(target: &mut glium::Frame, grid: &Grid, camera: &mut Camera) {
         transform: tile_transform_matrix,
     };
     for batch in tile_attrs.chunks(TILE_BATCH_SIZE) {
-        let instances_slice = TILE_INSTANCES_VBO.slice(0..batch.len()).unwrap();
+        let instances_slice = if batch.len() == TILE_BATCH_SIZE {
+            &**TILE_INSTANCES_VBO
+        } else {
+            // For some bizarre reason, writing to only a portion of a VBO used
+            // for instanced rendering messes up *previous* draw calls using
+            // that same VBO. So we have to use the "overflow" VBO for the last
+            // batch.
+            &**TILE_INSTANCES_OVERFLOW_VBO
+        }
+        .slice(0..batch.len())
+        .unwrap();
+
         instances_slice.write(batch);
 
         target
