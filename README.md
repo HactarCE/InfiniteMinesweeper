@@ -1,3 +1,3 @@
 # HMines Infinite
 
-Infinite Minesweeper with a variety of other features
+Infinite Minesweeper with a handful of other features
