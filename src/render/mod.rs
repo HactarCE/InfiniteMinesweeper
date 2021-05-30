@@ -7,9 +7,9 @@ use send_wrapper::SendWrapper;
 mod shaders;
 mod textures;
 
-use crate::grid::{Camera, Grid, Tile};
+use crate::grid::{Camera, ChunkPos, Grid, Tile, TilePos, CHUNK_SIZE};
 
-const TILE_BATCH_SIZE: usize = 32;
+const TILE_BATCH_SIZE: usize = 4096;
 
 #[derive(Debug, Copy, Clone)]
 struct Vertex2D {
@@ -61,24 +61,38 @@ pub fn draw_grid(target: &mut glium::Frame, grid: &Grid, camera: &mut Camera) {
         ..glium::DrawParameters::default()
     };
 
-    let mut tiles = vec![];
-    for y in -10..10 {
-        for x in -10..10 {
-            tiles.push(TileAttr {
-                tile_coords: [x, y],
-                sprite_coords: [if x < 0 { 1 } else { 0 }, 2],
-            });
+    let (target_w, target_h) = target.get_dimensions();
+    let TilePos(mut x1, mut y1) = camera.pixel_to_tile_pos((0, target_h));
+    x1 -= 1;
+    y1 -= 1;
+    let TilePos(mut x2, mut y2) = camera.pixel_to_tile_pos((target_w, 0));
+    x2 += 1;
+    y2 += 1;
 
-            if y == 0 && 0 <= x && x < 8 {
-                tiles.push(TileAttr {
-                    tile_coords: [x, y],
-                    sprite_coords: [x as u32, 0],
-                });
-            } else if (x + 2 * y) % 4 == 0 {
-                tiles.push(TileAttr {
-                    tile_coords: [x, y],
-                    sprite_coords: [y as u32 % 2 + if x < 0 { 0 } else { 2 }, 1],
-                });
+    let ChunkPos(chunk_x1, chunk_y1) = TilePos(x1, y1).chunk();
+    let ChunkPos(chunk_x2, chunk_y2) = TilePos(x2, y2).chunk();
+
+    let mut tile_attrs = vec![];
+
+    for chunk_y in chunk_y1..=chunk_y2 {
+        for chunk_x in chunk_x1..=chunk_x2 {
+            let chunk = grid.get_chunk(ChunkPos(chunk_x, chunk_y));
+            for y in 0..CHUNK_SIZE as i32 {
+                for x in 0..CHUNK_SIZE as i32 {
+                    let tile_coords = [
+                        x + chunk_x * CHUNK_SIZE as i32,
+                        y + chunk_y * CHUNK_SIZE as i32,
+                    ];
+                    let tile = match chunk {
+                        Some(c) => c.get_tile(TilePos(x, y)),
+                        None => Tile::default(),
+                    };
+                    let sprite_coords = textures::bg_sprite_coords(tile);
+                    tile_attrs.push(TileAttr::new(tile_coords, sprite_coords));
+                    if let Some(sprite_coords) = textures::fg_sprite_coords(tile) {
+                        tile_attrs.push(TileAttr::new(tile_coords, sprite_coords));
+                    }
+                }
             }
         }
     }
@@ -89,7 +103,7 @@ pub fn draw_grid(target: &mut glium::Frame, grid: &Grid, camera: &mut Camera) {
         camera_center: camera.int_center(),
         transform: tile_transform_matrix,
     };
-    for batch in tiles.chunks(TILE_BATCH_SIZE) {
+    for batch in tile_attrs.chunks(TILE_BATCH_SIZE) {
         let instances_slice = TILE_INSTANCES_VBO.slice(0..batch.len()).unwrap();
         instances_slice.write(batch);
 

@@ -8,8 +8,8 @@ pub use tile::*;
 
 use std::collections::HashMap;
 
-const CHUNK_SIZE_LOG_2: usize = 6;
-const CHUNK_SIZE: usize = 2_usize.pow(CHUNK_SIZE_LOG_2 as u32);
+pub const CHUNK_SIZE_LOG_2: usize = 6;
+pub const CHUNK_SIZE: usize = 2_usize.pow(CHUNK_SIZE_LOG_2 as u32);
 
 #[derive(Debug, Default, Clone)]
 pub struct Grid(HashMap<ChunkPos, Chunk>);
@@ -43,7 +43,7 @@ impl Grid {
 
 /// Tile coordinates.
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct TilePos(i32, i32);
+pub struct TilePos(pub i32, pub i32);
 impl TilePos {
     /// Returns the position of the chunk containing the tile position.
     pub fn chunk(self) -> ChunkPos {
@@ -54,7 +54,7 @@ impl TilePos {
 
 /// Global coordinates of a chunk.
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct ChunkPos(i32, i32);
+pub struct ChunkPos(pub i32, pub i32);
 
 /// Square chunk of tiles.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

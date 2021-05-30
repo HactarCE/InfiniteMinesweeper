@@ -1,6 +1,6 @@
 use cgmath::{InnerSpace, Matrix4, Point2, Vector2, Zero};
 
-use super::Scale;
+use super::{Scale, TilePos};
 
 /// Minimum target width & height, to avoid divide-by-zero errors.
 const MIN_TARGET_SIZE: u32 = 10;
@@ -272,27 +272,22 @@ impl Camera {
         cgmath::Matrix4::from_nonuniform_scale(sx, sy, sz)
     }
 
-    // /// Returns a rectangle of tiles that are at least partially visible,
-    // /// rounded outward to the nearest render tile.
-    // fn global_visible_rect(self) -> BigRect<D> {
-    //     // Compute the width and height of individual tiles that fit on the
-    //     // screen.
-    //     let (target_w, target_h) = self.target_dimensions();
-    //     let target_pixels_size: IVec2D = NdVec([target_w as isize, target_h as isize]);
-    //     let target_tiles_size: FixedVec2D = self
-    //         .scale()
-    //         .units_to_tiles(target_pixels_size.to_fixedvec());
-    //     // Compute the tile vector pointing from the center of the screen to the
-    //     // top right corner; i.e. the "half diagonal."
-    //     let half_diag: FixedVec2D = target_tiles_size / 2.0;
+    /// Returns the global tile coordinates of a pixel.
+    pub fn pixel_to_tile_coords(self, (x, y): (u32, u32)) -> Point2<f64> {
+        let (target_w, target_h) = self.target_dimensions;
+        let x = x as f64 - target_w as f64 / 2.0;
+        let y = -(y as f64 - target_h as f64 / 2.0);
 
-    //     // Round to render tile boundaries.
-    //     let render_tile_layer = self.render_tile_layer();
-    //     render_tile_layer.round_rect(&BigRect2D::centered(
-    //         self.center().floor(),
-    //         &half_diag.ceil(),
-    //     ))
-    // }
+        Point2::new(
+            x / self.scale.factor() + self.center.x,
+            y / self.scale.factor() + self.center.y,
+        )
+    }
+    /// Returns the global integer coordinates of the tile containing a pixel.
+    pub fn pixel_to_tile_pos(self, pixel: (u32, u32)) -> TilePos {
+        let t = self.pixel_to_tile_coords(pixel);
+        TilePos(t.x.floor() as i32, t.y.floor() as i32)
+    }
 
     // /// Returns a drag update function for `DragViewCmd::Pan`.
     // fn drag_pan(self, cursor_start: FVec2D) -> Option<DragUpdateViewFn<Self>> {

@@ -3,6 +3,8 @@ use glium::uniforms::{MinifySamplerFilter, Sampler};
 use lazy_static::lazy_static;
 use send_wrapper::SendWrapper;
 
+use crate::grid::{FlagState, Tile};
+
 fn write_tex_mipmap(t: &SrgbTexture2d, level: u32, image: RawImage2d<'_, u8>) {
     let mipmap_level = t.mipmap(level).expect("Missing mipmap level");
     let (width, height) = mipmap_level.dimensions();
@@ -50,4 +52,23 @@ lazy_static! {
         SendWrapper::new(TILES_SPRITESHEET_TEX
             .sampled()
             .minify_filter(MinifySamplerFilter::NearestMipmapNearest));
+}
+
+pub fn bg_sprite_coords(tile: Tile) -> [u32; 2] {
+    match tile {
+        Tile::Covered(_, _) => [1, 2],
+        Tile::Number(_) | Tile::Mine => [0, 2],
+    }
+}
+pub fn fg_sprite_coords(tile: Tile) -> Option<[u32; 2]> {
+    match tile {
+        Tile::Covered(f, _) => match f {
+            FlagState::None => None,
+            FlagState::Flag => Some([0, 1]),
+            FlagState::Question => Some([1, 1]),
+        },
+        Tile::Number(0) => None,
+        Tile::Number(i) => Some([i as u32 - 1, 0]),
+        Tile::Mine => Some([2, 1]),
+    }
 }
