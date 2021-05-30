@@ -23,6 +23,14 @@ struct TileAttr {
     sprite_coords: [u32; 2],
 }
 glium::implement_vertex!(TileAttr, tile_coords, sprite_coords);
+impl TileAttr {
+    fn new(tile_coords: [i32; 2], sprite_coords: [u32; 2]) -> Self {
+        Self {
+            tile_coords,
+            sprite_coords,
+        }
+    }
+}
 
 lazy_static! {
     static ref SQUARE_VBO: SendWrapper<VertexBuffer<Vertex2D>> = SendWrapper::new(
@@ -54,32 +62,45 @@ pub fn draw_grid(target: &mut glium::Frame, grid: &Grid, camera: &mut Camera) {
     };
 
     let mut tiles = vec![];
-    for x in 0..4 {
-        for y in 0..3 {
+    for y in -10..10 {
+        for x in -10..10 {
             tiles.push(TileAttr {
                 tile_coords: [x, y],
-                sprite_coords: [x as u32 * 64, y as u32 * 64],
+                sprite_coords: [if x < 0 { 1 } else { 0 }, 2],
             });
+
+            if y == 0 && 0 <= x && x < 8 {
+                tiles.push(TileAttr {
+                    tile_coords: [x, y],
+                    sprite_coords: [x as u32, 0],
+                });
+            } else if (x + 2 * y) % 4 == 0 {
+                tiles.push(TileAttr {
+                    tile_coords: [x, y],
+                    sprite_coords: [y as u32 % 2 + if x < 0 { 0 } else { 2 }, 1],
+                });
+            }
         }
     }
 
-    let instances = &**TILE_INSTANCES_VBO;
-    let instances_slice = instances.slice(0..tiles.len()).unwrap();
-    instances_slice.write(&tiles);
+    let uniform = glium::uniform! {
+        spritesheet: **textures::TILES_SPRITESHEET_SAMPLER,
 
-    target
-        .draw(
-            (&**SQUARE_VBO, instances_slice.per_instance().unwrap()),
-            &glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip),
-            &shaders::RGBA_PROGRAM,
-            &glium::uniform! {
-                spritesheet: textures::OVERLAY.sampled().minify_filter(MinifySamplerFilter::NearestMipmapNearest),
-                sprite_size: [64_u32, 64],
+        camera_center: camera.int_center(),
+        transform: tile_transform_matrix,
+    };
+    for batch in tiles.chunks(TILE_BATCH_SIZE) {
+        let instances_slice = TILE_INSTANCES_VBO.slice(0..batch.len()).unwrap();
+        instances_slice.write(batch);
 
-                camera_center: camera.int_center(),
-                transform: tile_transform_matrix,
-            },
-            &draw_params,
-        )
-        .expect("Failed to draw tiles");
+        target
+            .draw(
+                (&**SQUARE_VBO, instances_slice.per_instance().unwrap()),
+                &glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip),
+                &shaders::SPRITESHEET_PROGRAM,
+                &uniform,
+                &draw_params,
+            )
+            .expect("Failed to draw tiles");
+    }
 }

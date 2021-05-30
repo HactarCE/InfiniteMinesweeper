@@ -1,28 +1,7 @@
-use glium::texture::{MipmapsOption, RawImage2d, SrgbFormat, SrgbTexture2d};
+use glium::texture::{MipmapsOption, RawImage2d, SrgbTexture2d};
+use glium::uniforms::{MinifySamplerFilter, Sampler};
 use lazy_static::lazy_static;
 use send_wrapper::SendWrapper;
-
-macro_rules! load_mipmapped_sprites {
-    ($filename_prefix:expr) => {{
-        let raw_img_64 = include_bytes!(concat!($filename_prefix, "_64.png"));
-        let raw_img_32 = include_bytes!(concat!($filename_prefix, "_32.png"));
-        let raw_img_16 = include_bytes!(concat!($filename_prefix, "_16.png"));
-        let raw_img_8 = include_bytes!(concat!($filename_prefix, "_8.png"));
-
-        let t = SrgbTexture2d::with_mipmaps(
-            &**crate::DISPLAY,
-            load_rgba_image(raw_img_64),
-            MipmapsOption::EmptyMipmapsMax(3),
-        )
-        .expect("Failed to create texture");
-
-        write_tex_mipmap(&t, 1, load_rgba_image(raw_img_32));
-        write_tex_mipmap(&t, 2, load_rgba_image(raw_img_16));
-        write_tex_mipmap(&t, 3, load_rgba_image(raw_img_8));
-
-        SendWrapper::new(t)
-    }};
-}
 
 fn write_tex_mipmap(t: &SrgbTexture2d, level: u32, image: RawImage2d<'_, u8>) {
     let mipmap_level = t.mipmap(level).expect("Missing mipmap level");
@@ -45,7 +24,30 @@ fn load_rgba_image(image_bytes: &[u8]) -> RawImage2d<'_, u8> {
 }
 
 lazy_static! {
-    pub static ref COVERED: SendWrapper<SrgbTexture2d> = load_mipmapped_sprites!("covered");
-    pub static ref UNCOVERED: SendWrapper<SrgbTexture2d> = load_mipmapped_sprites!("uncovered");
-    pub static ref OVERLAY: SendWrapper<SrgbTexture2d> = load_mipmapped_sprites!("overlay");
+    /// Mipmapped spritesheet texture for tiles.
+    static ref TILES_SPRITESHEET_TEX: SendWrapper<SrgbTexture2d> = {
+        let raw_img_64 = include_bytes!("tiles_64.png");
+        let raw_img_32 = include_bytes!("tiles_32.png");
+        let raw_img_16 = include_bytes!("tiles_16.png");
+        let raw_img_8 = include_bytes!("tiles_8.png");
+
+        let t = SrgbTexture2d::with_mipmaps(
+            &**crate::DISPLAY,
+            load_rgba_image(raw_img_64),
+            MipmapsOption::EmptyMipmapsMax(3),
+        )
+        .expect("Failed to create texture");
+
+        write_tex_mipmap(&t, 1, load_rgba_image(raw_img_32));
+        write_tex_mipmap(&t, 2, load_rgba_image(raw_img_16));
+        write_tex_mipmap(&t, 3, load_rgba_image(raw_img_8));
+
+        SendWrapper::new(t)
+    };
+
+    /// Mipmapped texture sampler for the tiles spritesheet.
+    pub static ref TILES_SPRITESHEET_SAMPLER: SendWrapper<Sampler<'static, SrgbTexture2d>> =
+        SendWrapper::new(TILES_SPRITESHEET_TEX
+            .sampled()
+            .minify_filter(MinifySamplerFilter::NearestMipmapNearest));
 }
