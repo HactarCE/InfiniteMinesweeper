@@ -1,5 +1,6 @@
 use glium::glutin::event::{
-    ElementState, KeyboardInput, ModifiersState, MouseButton, MouseScrollDelta, WindowEvent,
+    ElementState, ModifiersState, MouseButton, MouseScrollDelta, ScanCode, VirtualKeyCode,
+    WindowEvent,
 };
 
 mod camera;
@@ -15,12 +16,22 @@ pub use tile::{FlagState, HiddenState, Tile};
 
 #[derive(Debug, Default, Clone)]
 pub struct Game {
+    /// Tile grid.
     pub grid: Grid,
+    /// Camera.
     pub camera: Camera,
-    cursor_pos: Option<(u32, u32)>,
 
+    /// Position of the mouse cursor.
+    cursor_pos: Option<(u32, u32)>,
+    /// Mouse drag in progress.
     drag: Option<input::Drag>,
 
+    /// Set of pressed keys.
+    keys: input::KeysPressed,
+    /// Set of pressed modifiers.
+    modifiers: ModifiersState,
+
+    /// Whether the player moved the camera on this frame.
     moved_this_frame: bool,
 }
 impl Game {
@@ -57,10 +68,18 @@ impl Game {
     pub fn handle_event(&mut self, ev: WindowEvent<'_>) {
         match ev {
             // Handle keyboard input.
-            WindowEvent::KeyboardInput { input, .. } => self.handle_keyboard_input(input),
+            WindowEvent::KeyboardInput { input, .. } => {
+                self.keys.update(&input);
+                let sc = input.scancode;
+                let vkc = input.virtual_keycode;
+                match input.state {
+                    ElementState::Pressed => self.handle_key_press(sc, vkc),
+                    ElementState::Released => self.handle_key_release(sc, vkc),
+                }
+            }
             // Handle keyboard modifies.
             WindowEvent::ModifiersChanged(modifiers_state) => {
-                self.update_modifiers(modifiers_state)
+                self.modifiers = modifiers_state;
             }
 
             // Handle cursor events.
@@ -79,10 +98,7 @@ impl Game {
             WindowEvent::CursorLeft { .. } => self.cursor_pos = None,
 
             // Handle mouse wheel.
-            WindowEvent::MouseWheel { delta, .. } => match delta {
-                MouseScrollDelta::LineDelta(dy, _) => todo!(),
-                MouseScrollDelta::PixelDelta(dy) => todo!(),
-            },
+            WindowEvent::MouseWheel { delta, .. } => self.handle_mouse_wheel(delta),
 
             // Handle mouse click.
             WindowEvent::MouseInput { state, button, .. } => match state {
@@ -94,9 +110,23 @@ impl Game {
         }
     }
 
-    fn handle_keyboard_input(&mut self, input: KeyboardInput) {}
+    fn handle_key_press(&mut self, sc: ScanCode, vkc: Option<VirtualKeyCode>) {}
+    fn handle_key_release(&mut self, sc: ScanCode, vkc: Option<VirtualKeyCode>) {}
 
-    fn update_modifiers(&mut self, modifiers_state: ModifiersState) {}
+    fn handle_mouse_wheel(&mut self, delta: MouseScrollDelta) {
+        let dy = match delta {
+            MouseScrollDelta::LineDelta(_dx, dy) => dy as f64,
+            MouseScrollDelta::PixelDelta(delta) => delta.y,
+        } / 2.0;
+
+        let invariant_pos = if let Some(pixel) = self.cursor_pos {
+            Some(self.camera.pixel_to_tile_coords(pixel))
+        } else {
+            None
+        };
+
+        self.camera.scale_by_log2_factor(dy, invariant_pos);
+    }
 
     fn handle_mouse_press(&mut self, button: MouseButton) {
         if self.drag.is_some() {
@@ -126,7 +156,6 @@ impl Game {
             kind: drag_kind,
         });
     }
-
     fn handle_mouse_release(&mut self, button: MouseButton) {
         let tile_pos = match self.cursor_pos {
             Some(pixel) => self.camera.pixel_to_tile_pos(pixel),
