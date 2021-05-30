@@ -246,7 +246,7 @@ impl Game {
         let scale_delta = dz * input::KEYBD_SCALE_SPEED * frame_duration.as_secs_f64();
         self.camera_target.scale_by_log2_factor(scale_delta, None);
 
-        if dz == 0.0 {
+        if dz == 0.0 && !self.is_drag_scaling() {
             self.camera_target.snap_scale(None);
         }
 
