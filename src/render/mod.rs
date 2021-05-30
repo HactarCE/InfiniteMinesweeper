@@ -87,10 +87,10 @@ pub fn draw_grid(target: &mut glium::Frame, grid: &Grid, camera: &mut Camera) {
                         Some(c) => c.get_tile(TilePos(x, y)),
                         None => Tile::default(),
                     };
-                    let sprite_coords = textures::bg_sprite_coords(tile);
-                    tile_attrs.push(TileAttr::new(tile_coords, sprite_coords));
-                    if let Some(sprite_coords) = textures::fg_sprite_coords(tile) {
-                        tile_attrs.push(TileAttr::new(tile_coords, sprite_coords));
+                    let bg_sprite_coords = textures::bg_sprite_coords(tile);
+                    tile_attrs.push(TileAttr::new(tile_coords, bg_sprite_coords));
+                    if let Some(fg_sprite_coords) = textures::fg_sprite_coords(tile) {
+                        tile_attrs.push(TileAttr::new(tile_coords, fg_sprite_coords));
                     }
                 }
             }
