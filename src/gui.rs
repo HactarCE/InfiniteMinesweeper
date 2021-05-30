@@ -80,26 +80,110 @@ pub fn show_gui() -> ! {
             *control_flow = ControlFlow::WaitUntil(next_frame_time);
 
             for ev in events_buffer.drain(..) {
-                // Handle events ourself.
+                // Handle events.
                 match ev {
                     Event::WindowEvent { event, .. } => match event {
                         // Handle window close event.
                         WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+
+                        // Handle keyboard input.
+                        WindowEvent::KeyboardInput {
+                            device_id,
+                            input,
+                            is_synthetic,
+                        } => (),
+                        // Handle keyboard modifies.
+                        WindowEvent::ModifiersChanged(_) => (),
+
+                        // Handle cursor events.
+                        WindowEvent::CursorMoved { position, .. } => {
+                            let pos = (position.x as u32, position.y as u32);
+                            cursor_pos = Some(pos);
+                            if let Some(d) = &mut drag {
+                                d.update_cursor_end(pos);
+                                if d.past_threshold {
+                                    camera.drag(*d);
+                                }
+                            }
+                        }
+                        WindowEvent::CursorLeft { .. } => cursor_pos = None,
+
+                        // Handle mouse wheel.
+                        WindowEvent::MouseWheel { delta, .. } => (),
+
+                        // Handle mouse click.
+                        WindowEvent::MouseInput { state, button, .. } => {
+                            if let Some(pixel) = cursor_pos {
+                                match state {
+                                    ElementState::Pressed => {
+                                        if drag.is_none() {
+                                            let drag_kind = match button {
+                                                MouseButton::Left | MouseButton::Right => {
+                                                    Some(DragKind::Pan)
+                                                }
+                                                MouseButton::Middle => Some(DragKind::Scale),
+                                                _ => None,
+                                            };
+                                            if let Some(kind) = drag_kind {
+                                                drag = Some(Drag {
+                                                    tile_coords: camera.pixel_to_tile_coords(pixel),
+                                                    initial_scale_factor: camera.scale().factor(),
+
+                                                    cursor_start: pixel,
+                                                    cursor_end: pixel,
+                                                    past_threshold: false,
+
+                                                    kind,
+                                                });
+                                            }
+                                        }
+                                    }
+                                    ElementState::Released => {
+                                        let tile_pos = camera.pixel_to_tile_pos(pixel);
+                                        if let Some(d) = drag {
+                                            drag = None;
+                                        } else {
+                                            match button {
+                                                MouseButton::Left => {
+                                                    grid.set_tile(tile_pos, Tile::Number(0));
+                                                }
+                                                MouseButton::Right => match grid.get_tile(tile_pos)
+                                                {
+                                                    Tile::Covered(FlagState::None, h) => grid
+                                                        .set_tile(
+                                                            tile_pos,
+                                                            Tile::Covered(FlagState::Flag, h),
+                                                        ),
+                                                    Tile::Covered(FlagState::Flag, h) => grid
+                                                        .set_tile(
+                                                            tile_pos,
+                                                            Tile::Covered(FlagState::Question, h),
+                                                        ),
+                                                    Tile::Covered(FlagState::Question, h) => grid
+                                                        .set_tile(
+                                                            tile_pos,
+                                                            Tile::Covered(FlagState::None, h),
+                                                        ),
+                                                    _ => (),
+                                                },
+                                                MouseButton::Middle => todo!(),
+                                                MouseButton::Other(_) => todo!(),
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         _ => (),
                     },
                     _ => (),
                 }
             }
 
+            // Draw everything.
             let mut target = display.draw();
-
-            target.clear_color_srgb(0.9, 0.9, 0.9, 1.0);
-            camera.set_scale(Scale::from_log2_factor(
-                (frame_count as f64 / 60.0).sin() * 1.75 + 4.5,
-            ));
             render::draw_grid(&mut target, &grid, &mut camera);
-
-            // Put it all on the screen.
             target.finish().expect("Failed to swap buffers");
         }
     })

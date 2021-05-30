@@ -1,6 +1,7 @@
 use cgmath::{InnerSpace, Matrix4, Point2, Vector2, Zero};
 
 use super::{Scale, TilePos};
+use crate::input::drag::{Drag, DragKind};
 
 /// Minimum target width & height, to avoid divide-by-zero errors.
 const MIN_TARGET_SIZE: u32 = 10;
@@ -289,33 +290,23 @@ impl Camera {
         TilePos(t.x.floor() as i32, t.y.floor() as i32)
     }
 
-    // /// Returns a drag update function for `DragViewCmd::Pan`.
-    // fn drag_pan(self, cursor_start: FVec2D) -> Option<DragUpdateViewFn<Self>> {
-    //     let start = self.tile_transform().pixel_to_global_pos(cursor_start);
-    //     Some(Box::new(move |this, cursor_end| {
-    //         let end = this.tile_transform().pixel_to_global_pos(cursor_end);
-    //         this.center += start.clone() - end;
-    //         Ok(DragOutcome::Continue)
-    //     }))
-    // }
-
-    // /// Returns a drag update function for `DragViewCmd::Scale`.
-    // fn drag_scale(self, cursor_start: FVec2D) -> Option<DragUpdateViewFn<Self>> {
-    //     let initial_scale = self.scale();
-    //     Some(Box::new(move |this, cursor_end| {
-    //         let delta =
-    //             (cursor_end - cursor_start)[Axis::Y] / -CONFIG.lock().ctrl.pixels_per_2x_scale_2d;
-    //         this.set_scale(Scale::from_log2_factor(initial_scale.log2_factor() + delta));
-    //         Ok(DragOutcome::Continue)
-    //     }))
-    // }
-
-    // /// Moves the camera in 2D.
-    // fn apply_move(&mut self, movement: Move2D) {
-    //     let Move2D { dx, dy } = movement;
-    //     let delta: FVec2D = NdVec([r64(dx), r64(dy)]);
-    //     self.center += self.scale.units_to_tiles(delta.to_fixedvec());
-    // }
+    /// Updates camera according to a drag.
+    pub fn drag(&mut self, drag: Drag) {
+        match drag.kind {
+            DragKind::Pan => {
+                let start = drag.tile_coords;
+                let end = self.pixel_to_tile_coords(drag.cursor_end);
+                self.set_center(self.center + (start - end));
+            }
+            DragKind::Scale => {
+                let y1 = drag.cursor_start.1 as f64;
+                let y2 = drag.cursor_end.1 as f64;
+                let delta = (y2 - y1) / -PIXELS_PER_2X_SCALE;
+                let initial = Scale::from_factor(drag.initial_scale_factor);
+                self.set_scale(Scale::from_log2_factor(initial.log2_factor() + delta));
+            }
+        }
+    }
 }
 
 /// Returns the "average" scale between the two cameras, averaging scale factor
