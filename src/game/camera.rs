@@ -95,6 +95,11 @@ impl Camera {
         self.scale = scale.clamp();
     }
 
+    /// Pans by a number of tiles.
+    pub fn pan(&mut self, delta: Vector2<f64>) {
+        self.center += delta;
+    }
+
     /// Sets the visual scale of tiles, keeping one point at the same location
     /// on the screen.
     ///

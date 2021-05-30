@@ -1,3 +1,4 @@
+use cgmath::Vector2;
 use glium::glutin::event::{
     ElementState, ModifiersState, MouseButton, MouseScrollDelta, ScanCode, VirtualKeyCode,
     WindowEvent,
@@ -14,6 +15,32 @@ pub use camera::Camera;
 pub use grid::{Chunk, ChunkPos, Grid, TilePos, CHUNK_SIZE};
 pub use scale::Scale;
 pub use tile::{FlagState, HiddenState, Tile};
+
+const KEYBD_MOVE_SPEED: f64 = 1000.0;
+const KEYBD_SCALE_SPEED: f64 = 4.0;
+
+// Define keyboard scancodes. OSX scancodes are from
+// https://eastmanreference.com/complete-list-of-applescript-key-codes
+#[cfg(any(target_os = "macos"))]
+mod sc {
+    pub const W: u32 = 13;
+    pub const A: u32 = 0;
+    pub const S: u32 = 1;
+    pub const D: u32 = 2;
+    pub const Q: u32 = 12;
+    pub const E: u32 = 14;
+    pub const Z: u32 = 6;
+}
+#[cfg(not(any(target_os = "macos")))]
+mod sc {
+    pub const W: u32 = 17;
+    pub const A: u32 = 30;
+    pub const S: u32 = 31;
+    pub const D: u32 = 32;
+    pub const Q: u32 = 16;
+    pub const E: u32 = 18;
+    pub const Z: u32 = 44;
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct Game {
@@ -33,9 +60,6 @@ pub struct Game {
     keys: input::KeysPressed,
     /// Set of pressed modifiers.
     modifiers: ModifiersState,
-
-    /// Whether the player moved the camera on this frame.
-    moved_this_frame: bool,
 }
 impl Game {
     /// Returns a new game.
@@ -188,9 +212,32 @@ impl Game {
         self.camera_target
             .set_target_dimensions(self.camera.target_dimensions());
 
-        if self.moved_this_frame || self.drag.is_some() {
-            self.moved_this_frame = false;
-        } else {
+        let mut dx = 0.0;
+        let mut dy = 0.0;
+        let mut dz = 0.0;
+
+        dx += self.keys[sc::D] as u32 as f64;
+        dx -= self.keys[sc::A] as u32 as f64;
+        dy += self.keys[sc::W] as u32 as f64;
+        dy -= self.keys[sc::S] as u32 as f64;
+        dz += self.keys[sc::Q] as u32 as f64;
+        dz -= (self.keys[sc::Z] || self.keys[sc::E]) as u32 as f64;
+
+        if self.modifiers.shift() {
+            dx *= 2.0;
+            dy *= 2.0;
+            dz *= 2.0;
+        }
+
+        let pan_delta = Vector2::new(dx, dy) * KEYBD_MOVE_SPEED
+            / self.camera_target.scale().factor()
+            * frame_duration.as_secs_f64();
+        self.camera_target.pan(pan_delta);
+
+        let scale_delta = dz * KEYBD_SCALE_SPEED * frame_duration.as_secs_f64();
+        self.camera_target.scale_by_log2_factor(scale_delta, None);
+
+        if dz == 0.0 {
             self.camera_target.snap_scale(None);
         }
 
