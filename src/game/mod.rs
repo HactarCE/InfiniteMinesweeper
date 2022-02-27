@@ -19,7 +19,7 @@ pub use grid::{Chunk, ChunkPos, Grid, TilePos, CHUNK_SIZE};
 pub use scale::Scale;
 pub use tile::{FlagState, HiddenState, Tile};
 
-pub const MINE_DENSITY: f64 = 0.25;
+pub const MINE_DENSITY: f64 = 0.2;
 
 #[derive(Debug, Default, Clone)]
 pub struct Game {
