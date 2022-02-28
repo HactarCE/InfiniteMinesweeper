@@ -254,13 +254,6 @@ impl Game {
             .advance_interpolation(self.camera_target, frame_duration);
     }
 
-    fn is_drag_panning(&self) -> bool {
-        if let Some(d) = self.drag {
-            d.kind == input::DragKind::Pan
-        } else {
-            false
-        }
-    }
     fn is_drag_scaling(&self) -> bool {
         if let Some(d) = self.drag {
             d.kind == input::DragKind::Scale

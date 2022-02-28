@@ -29,8 +29,6 @@ const INTERPOLATION_DECAY_CONSTANT: f64 = 0.04;
 pub struct Camera {
     /// Width and height of the render target.
     target_dimensions: (u32, u32),
-    /// Display scaling factor.
-    dpi: f32,
 
     /// Tile coordinates at the center of the camera.
     center: Point2<f64>,
@@ -42,7 +40,6 @@ impl Default for Camera {
     fn default() -> Self {
         Self {
             target_dimensions: (MIN_TARGET_SIZE, MIN_TARGET_SIZE),
-            dpi: 1.0,
 
             center: Point2::new(0.0, 0.0),
             scale: Scale::default(),
@@ -51,11 +48,6 @@ impl Default for Camera {
 }
 
 impl Camera {
-    /// Returns a new camera at the center of the grid.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     /// Returns the width and height of the render target.
     pub fn target_dimensions(self) -> (u32, u32) {
         self.target_dimensions
@@ -66,15 +58,6 @@ impl Camera {
             std::cmp::max(MIN_TARGET_SIZE, target_w),
             std::cmp::max(MIN_TARGET_SIZE, target_h),
         );
-    }
-    /// Returns the display scaling factor, which does not affect rendering of
-    /// tiles but may affect other UI elements.
-    pub fn dpi(self) -> f32 {
-        self.dpi
-    }
-    /// Sets the display scaling factor.
-    pub fn set_dpi(&mut self, dpi: f32) {
-        self.dpi = dpi;
     }
 
     /// Returns the position of the center of the camera.

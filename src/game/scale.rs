@@ -80,18 +80,6 @@ impl Scale {
             log2_factor: self.log2_factor.round(),
         }
     }
-    /// Rounds the scale factor down (zooms out) to the nearest power of 2.
-    pub fn floor(self) -> Self {
-        Self {
-            log2_factor: self.log2_factor.floor(),
-        }
-    }
-    /// Rounds the scale factor up (zooms in) to the nearest power of 2.
-    pub fn ceil(self) -> Self {
-        Self {
-            log2_factor: self.log2_factor.ceil(),
-        }
-    }
 }
 
 impl Mul<f64> for Scale {
