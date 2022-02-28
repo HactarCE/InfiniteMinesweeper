@@ -1,5 +1,4 @@
 use cgmath::{Point2, Vector2};
-use directories::ProjectDirs;
 use glium::glutin::event::{
     ElementState, ModifiersState, MouseButton, MouseScrollDelta, ScanCode, VirtualKeyCode,
     WindowEvent,
@@ -20,6 +19,7 @@ pub use scale::Scale;
 pub use tile::{FlagState, HiddenState, Tile};
 
 pub const MINE_DENSITY: f64 = 0.2;
+pub const SAVE_FILE_NAME: &str = "infinite_minesweeper_data.txt";
 
 #[derive(Debug, Default, Clone)]
 pub struct Game {
@@ -295,9 +295,8 @@ impl Game {
             .ok()
     }
     fn get_data_file_path() -> Option<std::path::PathBuf> {
-        let dirs = ProjectDirs::from("", "", "HMinesInfinite")?;
-        let data_dir = dirs.data_dir();
-        std::fs::create_dir_all(data_dir).ok()?;
-        Some(data_dir.join("data.txt"))
+        let mut path = std::env::current_exe().ok()?.parent()?.to_path_buf();
+        path.push(SAVE_FILE_NAME);
+        Some(path)
     }
 }
