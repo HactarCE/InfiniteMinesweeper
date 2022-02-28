@@ -1,6 +1,6 @@
 [package]
 name = "infinite-minesweeper"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["HactarCE <6060305+HactarCE@users.noreply.github.com>"]
 edition = "2018"
 
@@ -23,6 +23,6 @@ winres = "0.1"
 [package.metadata.winres]
 FileDescription = "Infinite Minesweeper"
 ProductName = "Infinite Minesweeper"
-ProductVersion = "0.1.0"
+ProductVersion = "1.0.0"
 OriginalFilename = "infinite_minesweeper.exe"
 LegalCopyright = "Copyright © 2022 HactarCE"
