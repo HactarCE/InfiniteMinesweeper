@@ -1,0 +1,100 @@
+name: build
+
+on:
+  push:
+    branches: [ stable ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  INFINITE_MINESWEEPER_VERSION: 1.0.0
+
+jobs:
+
+  windows:
+    name: Build Windows latest
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            components: clippy
+            override: true
+      - name: Build Infinite Minesweeper
+        run: cargo build --release
+      - name: Upload executable
+        uses: actions/upload-artifact@v2
+        with:
+          name: infinite_minesweeper_v${{ env.INFINITE_MINESWEEPER_VERSION }}_win64
+          path: target/release/infinite_minesweeper.exe
+
+  linux:
+    name: Build Linux latest
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            components: clippy
+            override: true
+      - name: Update apt
+        run: sudo apt update
+      - name: Install egui dependencies
+        run: sudo apt install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev
+      - name: Build Infinite Minesweeper
+        run: cargo build --release
+      - name: Make tarball
+        run: tar -czf infinite_minesweeper_v${{ env.INFINITE_MINESWEEPER_VERSION }}_linux.tar.gz target/release/infinite_minesweeper
+      - name: Upload executable
+        uses: actions/upload-artifact@v2
+        with:
+          name: infinite_minesweeper_v${{ env.INFINITE_MINESWEEPER_VERSION }}_linux
+          path: infinite_minesweeper_v${{ env.INFINITE_MINESWEEPER_VERSION }}_linux.tar.gz
+
+  macos:
+    name: Build macOS latest
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            components: clippy
+            override: true
+      - name: Build Infinite Minesweeper
+        run: cargo build --release
+      - name: Make app
+        run: |
+          git clone https://github.com/Xeoncross/macappshell.git
+          ./macappshell/setup.sh InfiniteMinesweeper resources/icon/infinite_minesweeper_512x512.png
+          mv target/release/infinite_minesweeper "InfiniteMinesweeper.app/Contents/MacOS/InfiniteMinesweeper"
+      - name: Make tarball
+        run: tar -czf infinite_minesweeper_v${{ env.INFINITE_MINESWEEPER_VERSION }}_macos.tar.gz InfiniteMinesweeper.app
+      - name: Upload app
+        uses: actions/upload-artifact@v2
+        with:
+          name: infinite_minesweeper_v${{ env.INFINITE_MINESWEEPER_VERSION }}_macos
+          path: infinite_minesweeper_v${{ env.INFINITE_MINESWEEPER_VERSION }}_macos.tar.gz
