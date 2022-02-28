@@ -7,12 +7,12 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cgmath = "0.18"
-glium = "0.29"
-image = "0.23"
-itertools = "0.10"
-lazy_static = "1.4"
-log = "0.4"
-rand = "0.8"
-send_wrapper = "0.5"
-simple_logger = "1.11"
+cgmath = "0.18.0"
+glium = "0.31.0"
+image = "0.23.14" # cannot update due to
+itertools = "0.10.3"
+lazy_static = "1.4.0"
+log = "0.4.14"
+rand = "0.8.5"
+send_wrapper = "0.5.0"
+simple_logger = "2.1.0"
