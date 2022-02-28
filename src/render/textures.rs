@@ -28,12 +28,12 @@ fn load_rgba_image(image_bytes: &[u8]) -> RawImage2d<'_, u8> {
 lazy_static! {
     /// Mipmapped spritesheet texture for tiles.
     static ref TILES_SPRITESHEET_TEX: SendWrapper<SrgbTexture2d> = {
-        let raw_img_64 = include_bytes!("tiles_64.png");
-        let raw_img_32 = include_bytes!("tiles_32.png");
-        let raw_img_16 = include_bytes!("tiles_16.png");
-        let raw_img_8 = include_bytes!("tiles_8.png");
-        let raw_img_4 = include_bytes!("tiles_4.png");
-        let raw_img_2 = include_bytes!("tiles_2.png");
+        let raw_img_64 = include_bytes!("../../resources/tilemaps/tiles_64.png");
+        let raw_img_32 = include_bytes!("../../resources/tilemaps/tiles_32.png");
+        let raw_img_16 = include_bytes!("../../resources/tilemaps/tiles_16.png");
+        let raw_img_8 = include_bytes!("../../resources/tilemaps/tiles_8.png");
+        let raw_img_4 = include_bytes!("../../resources/tilemaps/tiles_4.png");
+        let raw_img_2 = include_bytes!("../../resources/tilemaps/tiles_2.png");
 
         let t = SrgbTexture2d::with_mipmaps(
             &**crate::DISPLAY,
