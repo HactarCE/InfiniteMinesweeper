@@ -1,5 +1,5 @@
 [package]
-name = "hmines-infinite"
+name = "infinite-minesweeper"
 version = "0.1.0"
 authors = ["HactarCE <6060305+HactarCE@users.noreply.github.com>"]
 edition = "2018"

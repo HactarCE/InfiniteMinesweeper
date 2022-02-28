@@ -12,7 +12,7 @@ mod render;
 
 use gui::DISPLAY;
 
-const TITLE: &str = "HMines Infinite";
+const TITLE: &str = "Infinite Minesweeper";
 
 fn main() {
     gui::show_gui();
