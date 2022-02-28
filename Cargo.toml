@@ -16,3 +16,13 @@ log = "0.4.14"
 rand = "0.8.5"
 send_wrapper = "0.5.0"
 simple_logger = "2.1.0"
+
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1"
+
+[package.metadata.winres]
+FileDescription = "Infinite Minesweeper"
+ProductName = "Infinite Minesweeper"
+ProductVersion = "0.1.0"
+OriginalFilename = "infinite_minesweeper.exe"
+LegalCopyright = "Copyright © 2022 HactarCE"
