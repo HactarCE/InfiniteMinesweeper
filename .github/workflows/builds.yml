@@ -34,7 +34,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: infinite_minesweeper_v${{ env.INFINITE_MINESWEEPER_VERSION }}_win64
-          path: target/release/infinite_minesweeper.exe
+          path: target/release/infinite-minesweeper.exe
 
   linux:
     name: Build Linux latest
@@ -60,7 +60,7 @@ jobs:
       - name: Build Infinite Minesweeper
         run: cargo build --release
       - name: Make tarball
-        run: tar -czf infinite_minesweeper_v${{ env.INFINITE_MINESWEEPER_VERSION }}_linux.tar.gz target/release/infinite_minesweeper
+        run: tar -czf infinite_minesweeper_v${{ env.INFINITE_MINESWEEPER_VERSION }}_linux.tar.gz target/release/infinite-minesweeper
       - name: Upload executable
         uses: actions/upload-artifact@v2
         with:
@@ -90,7 +90,7 @@ jobs:
         run: |
           git clone https://github.com/Xeoncross/macappshell.git
           ./macappshell/setup.sh InfiniteMinesweeper resources/icon/infinite_minesweeper_512x512.png
-          mv target/release/infinite_minesweeper "InfiniteMinesweeper.app/Contents/MacOS/InfiniteMinesweeper"
+          mv target/release/infinite-minesweeper "InfiniteMinesweeper.app/Contents/MacOS/InfiniteMinesweeper"
       - name: Make tarball
         run: tar -czf infinite_minesweeper_v${{ env.INFINITE_MINESWEEPER_VERSION }}_macos.tar.gz InfiniteMinesweeper.app
       - name: Upload app
